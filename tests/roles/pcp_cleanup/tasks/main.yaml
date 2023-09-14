@@ -4,8 +4,8 @@
     {{ oc_header }}
 
     oc delete --wait=false openstackdataplane/openstack || true
-    oc delete --wait=false openstackcontrolplane/openstack || true
-    oc patch openstackcontrolplane openstack --type=merge --patch '
+    oc delete --wait=false openstackcontrolplane/{{ openstack_cr_name }} || true
+    oc patch openstackcontrolplane {{ openstack_cr_name }} --type=merge --patch '
     metadata:
       finalizers: []
     ' || true
@@ -13,7 +13,7 @@
     while oc get pod | grep rabbitmq-server-0; do
         sleep 2
     done
-    while oc get pod | grep mariadb-openstack; do
+    while oc get pod | grep {{ db_pod_name }}; do
         sleep 2
     done
 

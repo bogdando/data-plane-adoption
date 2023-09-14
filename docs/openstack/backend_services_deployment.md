@@ -225,5 +225,6 @@ podified OpenStack control plane services.
 * Check that MariaDB is running.
 
   ```
-  oc get pod mariadb-openstack -o jsonpath='{.status.phase}{"\n"}'
+  oc get pod {{ db_pod_name }} -o jsonpath='{.status.phase}{"\n"}'
+  oc get pod {{ cell1_db_pod_name }} -o jsonpath='{.status.phase}{"\n"}'
   ```

@@ -23,3 +23,15 @@ edpm_chrony_ntp_servers:
 
 # Auth URL to use for adopted Keystone.
 auth_url: http://keystone-public-openstack.apps-crc.testing
+
+# Custom openstack CR file and resource name
+openstack_cr: "" # if not using default CR, customize this
+openstack_cr_name: openstack
+
+# DB backend specific names
+# MariaDB
+db_pod_name: mariadb-openstack
+cell1_db_pod_name: mariadb-openstack-cell1
+# Uncomment for Galera case
+#db_pod_name: openstack-galera-0
+#cell1_db_pod_name: openstack-cell1-galera-0

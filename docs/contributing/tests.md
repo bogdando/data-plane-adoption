@@ -36,6 +36,9 @@ samples are provided. To run the tests, follow this procedure:
   pip install openstackclient osc_placement jmespath
   ansible-galaxy collection install community.general
   ```
+* If a custom openstack control plane CR needs to be created, specify its
+  absolute file path in `vars.yaml` as ``openstack_cr`. Also define its k8s
+  resource name as ``openstack_cr_name``.
 
 * Run `make test-minimal`.
 

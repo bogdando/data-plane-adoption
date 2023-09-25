@@ -100,6 +100,56 @@
   changed_when: true
   notify: stop adoption helper pod
 
+- name: set fact for oc run args
+  ansible.builtin.set_fact:
+    oc_run_args:
+      spec:
+        containers:
+        - image: "{{ ovn_image }}"
+          command: [ "sh", "-c", "sleep infinity"]
+          name: adoption
+          volumeMounts:
+          - mountPath: /backup
+            name: backup
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ALL
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        volumes:
+        - hostPath:
+            path: "{{ playbook_dir }}/{{ ovn_copy_tmp_dir }}"
+            type: Directory
+          name: backup
+
+- name: prepare oc run args file
+  copy:
+    content: "{{ oc_run_args }}"
+    dest: "{{ ovn_copy_tmp_dir }}/oc_run_args.yaml"
+  register: oc_run_args_file
+
+- name: set fact for oc run command
+  ansible.builtin.set_fact:
+    oc_run_cmd: >-
+      oc delete pod adoption --ignore-not-found=true;
+      oc run adoption
+      --image {{ ovn_image }}
+      --overrides='$(cat {{ playbook_dir }}/{{ ovn_copy_tmp_dir }}/oc_run_args.yaml)';
+      oc wait --for=condition=Ready pod adoption --timeout=30s
+
+- name: start an adoption helper pod
+  ansible.builtin.shell: |-
+    {{ shell_header }}
+    {{ oc_header }}
+    
+    OCRUN="{{ oc_run_cmd }}"
+    eval $OCRUN
+  changed_when: true
+  notify: stop adoption helper pod
+
 - name: set OVN copy shell vars
   no_log: "{{ use_no_log }}"
   ansible.builtin.set_fact:

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* Previous Adoption steps completed. Notably, Memcached and 
+* Previous Adoption steps completed. Notably, Memcached and
   keystone should be already adopted.
 
 ## Variables

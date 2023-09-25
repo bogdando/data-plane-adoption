@@ -18,6 +18,7 @@
 
 - name: Adoption
   hosts: local
+  force_handlers: true  # required to remove the helper pod
   gather_facts: no
   force_handlers: true
   module_defaults:

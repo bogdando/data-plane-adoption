@@ -34,15 +34,9 @@
     - role: keystone_adoption
       tags:
         - keystone_adoption
-    - role: barbican_adoption
-      tags:
-        - barbican_adoption
     - role: neutron_adoption
       tags:
         - neutron_adoption
-    - role: swift_adoption
-      tags:
-        - swift_adoption
     - role: cinder_adoption
       tags:
         - cinder_adoption
@@ -55,20 +49,6 @@
     - role: nova_adoption
       tags:
         - nova_adoption
-    - role: horizon_adoption
-      tags:
-        - horizon_adoption
-    - role: heat_adoption
-      tags:
-        - heat_adoption
-    - role: telemetry_adoption
-      tags:
-        - telemetry_adoption
-      when: telemetry_adoption|default(true)
-    - role: autoscaling_adoption
-      tags:
-        - autoscaling_adoption
-      when: telemetry_adoption|default(true)
     - role: stop_remaining_services
       tags:
         - stop_remaining_services

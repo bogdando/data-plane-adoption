@@ -11,11 +11,11 @@ ovs_db_patch: |
         ovnDBCluster:
           ovndbcluster-nb:
             dbType: NB
-            storageRequest: 10G
+            storageRequest: 200M
             networkAttachment: internalapi
           ovndbcluster-sb:
             dbType: SB
-            storageRequest: 10G
+            storageRequest: 200M
             networkAttachment: internalapi
 
 ovn_northd_patch: |

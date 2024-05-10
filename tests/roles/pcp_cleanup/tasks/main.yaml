@@ -3,8 +3,10 @@
     {{ shell_header }}
     {{ oc_header }}
 
-    oc delete --ignore-not-found=true --wait=false openstackdataplanedeployment/openstack
-    oc delete --ignore-not-found=true --wait=false openstackdataplanedeployment/openstack-nova-compute-ffu
+    for CELL in $(echo $RENAMED_CELLS); do
+      oc delete --ignore-not-found=true --wait=false openstackdataplanedeployment/openstack-$CELL
+      oc delete --ignore-not-found=true --wait=false openstackdataplanedeployment/openstack-nova-compute-ffu-$CELL
+    done
     oc delete --ignore-not-found=true --wait=false openstackcontrolplane/openstack
     oc patch openstackcontrolplane openstack --type=merge --patch '
     metadata:
@@ -41,4 +43,9 @@
     {{ oc_header }}
     cd {{ install_yamls_path }}
     for i in {1..3}; do make crc_storage_cleanup crc_storage && break || sleep 5; done
+    {{ cells_env }}
+    for CELL in $(echo $RENAMED_CELLS) do
+      oc delete pvc mysql-db-openstack-$CELL-galera-0 --ignore-not-found=true
+      oc delete pvc persistence-rabbitmq-$CELL-server-0 --ignore-not-found=true
+    done
   when: reset_crc_storage|bool

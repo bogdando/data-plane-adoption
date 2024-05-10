@@ -12,7 +12,7 @@ swift_patch: |
           networkAttachments:
           - storage
           storageClass: local-storage
-          storageRequest: 10Gi
+          storageRequest: 200M
         swiftProxy:
           secret: osp-secret
           replicas: 1

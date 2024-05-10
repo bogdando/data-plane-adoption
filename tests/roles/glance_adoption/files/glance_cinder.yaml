@@ -7,7 +7,7 @@ spec:
       databaseInstance: openstack
       storage:
         storageClass: "local-storage"
-        storageRequest: 10G
+        storageRequest: 200M
       customServiceConfig: |
           [DEFAULT]
           enabled_backends = default_backend:cinder

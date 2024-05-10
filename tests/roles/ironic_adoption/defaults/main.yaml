@@ -25,7 +25,7 @@ ironic_patch: |
           networkAttachments:
           - baremetal
           provisionNetwork: baremetal
-          storageRequest: 10G
+          storageRequest: 200M
           storageClass: {{ storage_class_name }}
           customServiceConfig: |
             [neutron]

@@ -16,7 +16,7 @@ spec:
         store_description=Ceph glance store backend.
       storage:
         storageClass: "local-storage"
-        storageRequest: 10G
+        storageRequest: 200M
       glanceAPIs:
         default:
           replicas: 1

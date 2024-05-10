@@ -39,6 +39,7 @@ CONTROLLER2_SSH="ssh -i *<path to SSH key>* root@*<controller-2 IP>*"
 CONTROLLER3_SSH="ssh -i *<path to SSH key>* root@*<controller-3 IP>*"
 endif::[]
 ----
+* For a multi-cell deployment, specify the overcloud and cell controllers IPs instead, for example:
 * Specify the IP addresses of all Controller nodes, for example:
 +
 [subs=+quotes]
@@ -51,12 +52,13 @@ endif::[]
 ifeval::["{build}" == "downstream"]
 CONTROLLER1_SSH="ssh -i *<path to SSH key>* root@*<controller-1 IP>*" <2>
 CONTROLLER2_SSH="ssh -i *<path to SSH key>* root@*<controller-2 IP>*"
-CONTROLLER3_SSH="ssh -i *<path to SSH key>* root@*<controller-3 IP>*"
+CONTROLLER3_SSH="ssh -i *<path to SSH key>* root@*<node3 IP>*"
 # ...
 endif::[]
 ----
 ifeval::["{build}" == "downstream"]
 <1> Replace `<path_to_SSH_key>` with the path to your SSH key.
+<2> Replace `<controller-X IP>` with IP addresses  of all controllers, includinig cell controllers.
 <2> Replace `<controller-<X> IP>` with IP addresses of all Controller nodes.
 endif::[]
 

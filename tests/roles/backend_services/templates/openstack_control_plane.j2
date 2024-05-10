@@ -132,7 +132,7 @@ spec:
     templates:
       rabbitmq:
         persistence:
-          storage: 3Gi
+          storage: 1Gi
         override:
           service:
             metadata:
@@ -145,7 +145,7 @@ spec:
 {% for cell in renamed_cells %}
       rabbitmq-{{ cell }}:
         persistence:
-          storage: 3Gi
+          storage: 1Gi
         override:
           service:
             metadata:

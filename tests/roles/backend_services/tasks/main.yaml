@@ -120,6 +120,13 @@
   register: mariadb_running_result
   until: mariadb_running_result is success
   retries: 60
+  delay: 2
+  loop:
+    - openstack-galera-0
+    - openstack-cell1-galera-0
+    - rabbitmq-server-0
+    - rabbitmq-cell1-server-0
+  delay: 2
   delay: 5
 # TODO- debug value (was 2)
 

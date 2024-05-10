@@ -249,6 +249,13 @@ $ openstack server list
 +
 ----
 . ~/.source_cloud_exported_variables
+echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS
+oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F '| cell1 |'
+set +u
+. ~/.source_cloud_exported_variables_default
+set -u
+echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS
+oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F '| cell1 |'
 $ for CELL in $(echo $CELLS); do
   set +u
   . ~/.source_cloud_exported_variables_$CELL

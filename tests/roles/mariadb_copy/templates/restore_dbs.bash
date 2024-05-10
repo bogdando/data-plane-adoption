@@ -75,3 +75,9 @@ for CELL in $(echo $CELLS); do
       "delete from nova_${RCELL}.services where host not like '%nova_${RCELL}-%' and services.binary != 'nova-compute';"
 EOF
 done
+# <1> Defines which common databases to rename when importing them.
+# <2> Defines which cells databases to import, and how to rename them, if needed.
+# <3> Omits importing special `cell0` databases of the cells, as its contents cannot be consolidated during adoption.
+# <4> Defines which databases to import into which servers, usually dedicated for cells.
+# <5> Defines the root passwords map for database servers. You can only use the same password for now.
+# <6> Assigns which databases to import into which hosts when extracting databases from the `default` cell.

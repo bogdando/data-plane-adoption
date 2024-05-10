@@ -620,12 +620,16 @@ This example provides required infrastructure database and messaging services fo
 named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
 such as for `replicas`, `storage`, or `storageRequest`, as needed.
 
+This example provides required infrastructure database and messaging services for a 3 compute cells
+named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
+like `replicas`, `storage`, or `storageRequest`, as needed.
 
 .Verification
 
 * Verify that MariaDB and RabbitMQ are running, for all defined cells:
 * Verify that MariaDB is running:
 * Verify that MariaDB and RabbitMQ are running, for all defined cells:
+* Verify that MariaDB and RabbitMQ are running for all defined cells:
 * Verify that the Galera and RabbitMQ status is `Running` for all defined cells:
 +
 ----
@@ -659,6 +663,8 @@ galera.mariadb.openstack.org/openstack-cell1                       True     Setu
 ----
 Futher on, we will be referring to the given cells names via an environment
 variable `RENAMED_CELLS`.
++
+The given cells names are later referred to by using the environment variable `RENAMED_CELLS`.
 
 * Verify that the `OpenStackControlPlane` CR is waiting for deployment
   of the `openstackclient` pod:

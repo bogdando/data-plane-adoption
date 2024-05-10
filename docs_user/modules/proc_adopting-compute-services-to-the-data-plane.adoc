@@ -542,6 +542,8 @@ EOF
 apiVersion: dataplane.openstack.org/v1beta1
 kind: OpenStackDataPlaneNodeSet
 metadata:
+  name: openstack
+  name: openstack-cell1
   name: openstack-cell1
   name: openstack-$CELL <2>
   name: openstack-cell1
@@ -780,6 +782,67 @@ done
 +
 ----
 $ oc patch osdpns/openstack --type=merge --patch "
+spec:
+  services:
+    - bootstrap
+    - download-cache
+    - configure-network
+    - validate-network
+    - install-os
+    - configure-os
+    - ssh-known-hosts
+    - run-os
+    - reboot-os
+    - ceph-client
+    - install-certs
+    - ovn
+    - neutron-metadata
+    - libvirt
+    - nova
+    - telemetry
+  nodeTemplate:
+    extraMounts:
+    - extraVolType: Ceph
+      volumes:
+      - name: ceph
+        secret:
+          secretName: ceph-conf-files
+      mounts:
+      - name: ceph
+        mountPath: "/etc/ceph"
+        readOnly: true
+"
+$ oc patch osdpns/openstack-cell1 --type=merge --patch "
+spec:
+  services:
+    - bootstrap
+    - download-cache
+    - configure-network
+    - validate-network
+    - install-os
+    - configure-os
+    - ssh-known-hosts
+    - run-os
+    - reboot-os
+    - ceph-client
+    - install-certs
+    - ovn
+    - neutron-metadata
+    - libvirt
+    - nova
+    - telemetry
+  nodeTemplate:
+    extraMounts:
+    - extraVolType: Ceph
+      volumes:
+      - name: ceph
+        secret:
+          secretName: ceph-conf-files
+      mounts:
+      - name: ceph
+        mountPath: "/etc/ceph"
+        readOnly: true
+"
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch osdpns/openstack-$CELL --type=merge --patch "
@@ -860,6 +923,8 @@ Ensure that you use the same list of services from the original `OpenStackDataPl
 . Optional: Enable `neutron-sriov-nic-agent` in the `OpenStackDataPlaneNodeSet` CR:
 +
 ----
+$ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
+$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
@@ -891,6 +956,8 @@ $ oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
 . Optional: Enable `neutron-dhcp` in the `OpenStackDataPlaneNodeSet` CR:
 +
 ----
+$ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
+$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
@@ -1049,6 +1116,8 @@ $ oc logs -l app=openstackansibleee -f --max-log-requests 20
 . Wait for the data plane node sets to reach the `Ready` status:
 +
 ----
+$ oc wait --for condition=Ready osdpns/openstack --timeout=30m
+$ oc wait --for condition=Ready osdpns/openstack-cell1 --timeout=30m
 $ for CELL in $(echo $RENAMED_CELLS); do
   oc wait --for condition=Ready osdpns/openstack-$CELL --timeout=30m
 done

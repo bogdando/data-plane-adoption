@@ -305,7 +305,39 @@
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}
-    {{ cells_env }}
+    oc patch osdpns/openstack-cell1 --type=merge --patch "
+    spec:
+      services:
+        - bootstrap
+        - download-cache
+        - configure-network
+        - validate-network
+        - install-os
+        - ceph-hci-pre
+        - configure-os
+        - ssh-known-hosts
+        - run-os
+        - reboot-os
+        - ceph-client
+        - ovn
+        - neutron-metadata
+        - libvirt
+        - nova
+        {% if telemetry_adoption|bool +%}
+        - telemetry
+        {%+ endif +%}
+      nodeTemplate:
+        extraMounts:
+        - extraVolType: Ceph
+          volumes:
+          - name: ceph
+            secret:
+              secretName: ceph-conf-files
+          mounts:
+          - name: ceph
+            mountPath: "/etc/ceph"
+            readOnly: true
+    "
 
     for CELL in $(echo $RENAMED_CELLS); do
       test -f nodeset-${CELL}.yaml || continue
@@ -350,11 +382,7 @@
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}
-    {{ cells_env }}
-
-    for CELL in $(echo $RENAMED_CELLS); do
-      test -f nodeset-${CELL}.yaml || continue
-      oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
+    oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
       {
         "op": "add",
         "path": "/spec/services/-",
@@ -382,11 +410,7 @@
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}
-    {{ cells_env }}
-
-    for CELL in $(echo $RENAMED_CELLS); do
-      test -f nodeset-${CELL}.yaml || continue
-      oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
+    oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
       {
         "op": "add",
         "path": "/spec/services/-",
@@ -428,7 +452,11 @@
         metadata:
           name: openstack-pre-adoption
         spec:
-          nodeSets: $NODESETS
+          nodeSets:
+          - openstack-cell1
+          {%+ if edpm_nodes_networker is defined or edpm_networker_deploy +%}
+          - openstack-networker
+          {%+ endif +%}
           servicesOverride:
           - pre-adoption-validation
           backoffLimit: 1
@@ -497,7 +525,11 @@
         metadata:
           name: tripleo-cleanup
         spec:
-          nodeSets: $NODESETS
+          nodeSets:
+          - openstack-cell1
+          {%+ if edpm_nodes_networker is defined or edpm_networker_deploy +%}
+          - openstack-networker
+          {%+ endif +%}
           servicesOverride:
           - tripleo-cleanup
           backoffLimit: 1
@@ -549,7 +581,11 @@
     metadata:
       name: openstack
     spec:
-      nodeSets: $NODESETS
+      nodeSets:
+      - openstack-cell1
+      {%+ if edpm_nodes_networker is defined or edpm_networker_deploy +%}
+      - openstack-networker
+      {%+ endif +%}
       backoffLimit: 3
     EOF
 

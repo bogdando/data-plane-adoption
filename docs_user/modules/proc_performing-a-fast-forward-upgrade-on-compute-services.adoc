@@ -43,6 +43,8 @@ done
 
 .Procedure
 
+. Wait for {compute_service} data plane services version updated for all cells:
+* Define the shell variables necessary to apply the fast-forward upgrade commands, for each Nova Compute cell.
 . Wait for cell1 Compute data plane services version to update:
 . Wait for {compute_service} data plane services version updated for all cells:
 . Wait for the {compute_service} data plane services version to update for all the cells:

@@ -86,7 +86,6 @@ EOF
 ----
 PODIFIED_DB_ROOT_PASSWORD=$(oc get -o json secret/osp-secret | jq -r .data.DbRootPassword | base64 -d)
 CEPH_FSID=$(oc get secret ceph-conf-files -o json | jq -r '.data."ceph.conf"' | base64 -d | grep fsid | sed -e 's/fsid = //'
-$ CEPH_FSID=$(oc get secret ceph-conf-files -o json | jq -r '.data."ceph.conf"' | base64 -d | grep fsid | sed -e 's/fsid = //'
 
 $ alias openstack="oc exec -t openstackclient -- openstack"
 
@@ -553,7 +552,6 @@ apiVersion: dataplane.openstack.org/v1beta1
 kind: OpenStackDataPlaneNodeSet
 metadata:
   name: openstack-cell1
-  name: openstack-$CELL <2>
   name: openstack
   name: openstack-cell1
   name: openstack-$CELL <3>
@@ -792,9 +790,15 @@ done
 . If you use a {Ceph} back end for {block_storage_first_ref}, prepare the adopted data plane workloads:
 +
 ----
+$ oc patch osdpns/openstack-cell1 --type=merge --patch "
 $ oc patch osdpns/openstack --type=merge --patch "
 spec:
   services:
+$ for CELL in $(echo $RENAMED_CELLS); do
+  test -f nodeset-${CELL}.yaml || continue
+  oc patch osdpns/openstack-$CELL --type=merge --patch "
+  spec:
+    services:
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch osdpns/openstack-$CELL --type=merge --patch "
@@ -866,6 +870,10 @@ Ensure that you use the same list of services from the original `OpenStackDataPl
 . Optional: Enable `neutron-sriov-nic-agent` in the `OpenStackDataPlaneNodeSet` CR:
 +
 ----
+$ for CELL in $(echo $RENAMED_CELLS); do
+  test -f nodeset-${CELL}.yaml || continue
+  oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
+$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
@@ -894,6 +902,10 @@ $ oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
 . Optional: Enable `neutron-dhcp` in the `OpenStackDataPlaneNodeSet` CR:
 +
 ----
+$ for CELL in $(echo $RENAMED_CELLS); do
+  test -f nodeset-${CELL}.yaml || continue
+  oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
+$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
@@ -1049,6 +1061,10 @@ $ oc logs -l app=openstackansibleee -f --max-log-requests 20
 . Wait for the data plane node sets to reach the `Ready` status:
 +
 ----
+$ for CELL in $(echo $RENAMED_CELLS); do
+  oc wait --for condition=Ready osdpns/openstack-$CELL --timeout=30m
+done
+$ oc wait --for condition=Ready osdpns/openstack-cell1 --timeout=30m
 $ oc wait --for condition=Ready osdpns/openstack --timeout=30m
 $ for CELL in $(echo $RENAMED_CELLS); do
   oc wait --for condition=Ready osdpns/openstack-$CELL --timeout=30m

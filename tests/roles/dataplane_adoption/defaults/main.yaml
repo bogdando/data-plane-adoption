@@ -198,6 +198,7 @@ dataplane_cr: |
       ansible:
         ansibleUser: {{ edpm_user }}
         ansibleVars:
+          edpm_network_config_update: true # hack to always apply it for my dev envs
           edpm_bootstrap_release_version_package: []
           os_net_config_iface: {{ dataplane_os_net_config_iface | default ('nic1') }}
           os_net_config_set_route: {{ dataplane_os_net_config_set_route | default(true) | bool }}

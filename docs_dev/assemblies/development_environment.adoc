@@ -204,8 +204,11 @@ Adjust the following commands for a repositories configuration tool of your choi
 
 [,bash]
 ----
- export RH_REGISTRY_USER="<insert your registry.redhat.io user>"
- export RH_REGISTRY_PWD="<insert your registry.redhat.io password>"
+export RH_REGISTRY_USER="<insert your registry.redhat.io user>"
+export RH_REGISTRY_PWD="<insert your registry.redhat.io password>"
+
+DEFAULT_CELL_NAME="cell3" <1>
+RENAMED_CELLS="cell1 cell2 $DEFAULT_CELL_NAME"
 
 cd ~/install_yamls/devsetup
 cat <<EOF > /tmp/osp17_repos
@@ -278,6 +281,7 @@ make tripleo_deploy
 
 for n in 0 1 2 3 4; do make standalone_snapshot EDPM_COMPUTE_SUFFIX=$n; done
 ----
+<1> The source cloud default cell takes a new `$DEFAULT_CELL_NAME`. In a multi-cell adoption scenario, it may either retain its original name `default`, or become created as a last `cell<X>`.
 
 == Network routing
 
@@ -516,7 +520,7 @@ Clean up and initialize the storage PVs in CRC vm
 ----
 cd ..
 for i in {1..3}; do make crc_storage_cleanup crc_storage && break || sleep 5; done
-for CELL in $(echo $RENAMED_CELLS) do
+for CELL in $(echo $RENAMED_CELLS); do
    oc delete pvc mysql-db-openstack-$CELL-galera-0 --ignore-not-found=true
    oc delete pvc persistence-rabbitmq-$CELL-server-0 --ignore-not-found=true
 done

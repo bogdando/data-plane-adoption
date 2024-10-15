@@ -1,10 +1,13 @@
 - name: pre-launch test VM instance
   no_log: "{{ use_no_log }}"
   when: prelaunch_test_instance|bool
+  vars:
+    cinder_backend_configured: "{{  cinder_volume_backend == 'ceph' and cinder_backup_backend == 'ceph' }}"
   ansible.builtin.shell:
     cmd: |
       {{ shell_header }}
       export OPENSTACK_COMMAND="{{ openstack_command }}"
+      export CINDER_BACKEND_CONFIGURED="{{ cinder_backend_configured | string | lower }}"
       {{ lookup('ansible.builtin.file', prelaunch_test_instance_script) }}
 
 - name: creates Barbican secret

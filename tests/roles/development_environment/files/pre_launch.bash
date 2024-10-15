@@ -66,3 +66,39 @@ ${BASH_ALIASES[openstack]} security group rule list --protocol tcp --ingress -f 
 export FIP=192.168.122.20
 # check connectivity via FIP
 ping -c4 ${FIP}
+
+if [ "$CINDER_BACKEND_CONFIGURED" = "false" ]; then exit 0; fi
+
+# create bootable volume
+if ! ${BASH_ALIASES[openstack]} volume show disk ; then
+    ${BASH_ALIASES[openstack]} volume create --image cirros --size 1 disk
+    wait_for_status "volume show disk" "test volume 'disk' creation"
+fi
+
+# create volume backup
+if ! ${BASH_ALIASES[openstack]} volume backup show backup; then
+    ${BASH_ALIASES[openstack]} volume backup create --name backup disk
+    wait_for_status "volume backup show backup" "test volume 'disk' backup completion"
+fi
+
+# create volume snapshot
+if ! ${BASH_ALIASES[openstack]} volume snapshot show snapshot ; then
+    ${BASH_ALIASES[openstack]} volume snapshot create --volume disk snapshot
+    wait_for_status "volume snapshot show snapshot" "test volume 'disk' snapshot availability"
+fi
+
+# Add volume to the test VM
+if ${BASH_ALIASES[openstack]} volume show disk -f json | jq -r '.status' | grep -q available ; then
+    ${BASH_ALIASES[openstack]} server add volume test disk
+fi
+
+# create another bootable volume
+if ! ${BASH_ALIASES[openstack]} volume show boot-volume ; then
+    ${BASH_ALIASES[openstack]} volume create --image cirros --size 1 boot-volume
+    wait_for_status "volume show boot-volume" "test volume 'boot-volume' creation"
+fi
+
+# Launch an instance from boot-volume (BFV)
+if ${BASH_ALIASES[openstack]} volume show boot-volume -f json | jq -r '.status' | grep -q available ; then
+    ${BASH_ALIASES[openstack]} server create --flavor m1.small --volume boot-volume --nic net-id=private bfv-server --wait
+fi

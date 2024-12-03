@@ -80,6 +80,7 @@ nova_services_env: |
 
 # Headers for DB client CLI image
 mariadb_image_env: |
+  STORAGE_CLASS={{ storage_class_name }}
   MARIADB_IMAGE=quay.io/podified-antelope-centos9/openstack-mariadb:current-podified
 
 # Header for the source databases initial clusters members health check
@@ -111,6 +112,10 @@ mariadb_passwords_env: |-
   done
 
 # Header for the source database access
+# TODO: Env vars for OSPDo case are also configured in env_vars_src_ospdo.yaml. Move them here, eventually?
+# OSPDo RUN_OVERRIDES definition exists only in docs (missing in code?).
+# NOTE: in a split-stack source cloud, each stack passwords should come from a stack-specific passwords file,
+# but different passwords are not supported in a multi-cell deployment
 mariadb_copy_shell_vars_src: |-
   {{ shell_header }}
 
@@ -118,17 +123,10 @@ mariadb_copy_shell_vars_src: |-
 
   {{ mariadb_image_env }}
   {{ cells_env }}
-  MARIADB_CLIENT_ANNOTATIONS='--annotations=k8s.v1.cni.cncf.io/networks=internalapi'
-  STORAGE_CLASS={{ storage_class_name }}
 
   declare -A TRIPLEO_PASSWORDS
   for CELL in $(echo $CELLS); do
-    if [ "$CELL" = "default" ]; then
-      TRIPLEO_PASSWORDS[default]="$HOME/overcloud-passwords.yaml"
-    else
-      # in a split-stack source cloud, it should take a stack-specific passwords file instead
-      TRIPLEO_PASSWORDS[$CELL]="$HOME/overcloud-passwords.yaml"
-    fi
+      TRIPLEO_PASSWORDS[$CELL]="$TRIPLEO_PASSWORD"
   done
 
   RUN_OVERRIDES=' '
@@ -155,6 +153,8 @@ mariadb_copy_shell_vars_dst: |
   {{ oc_header }}
   {{ mariadb_image_env }}
   {{ cells_env }}
+
+  NAMESPACE={{ deploy_ctlplane_ospdo | bool | ternary(rhoso_namespace, org_namespace) }}
 
   # The CHARACTER_SET and collation should match the source DB
   # if the do not then it will break foreign key relationships

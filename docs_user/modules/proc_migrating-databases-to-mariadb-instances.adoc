@@ -55,6 +55,8 @@ RENAMED_CELLS="cell1 cell2 $DEFAULT_CELL_NAME"
 
 NAMESPACE="openstack"
 
+NAMESPACE="openstack"
+
 # The CHARACTER_SET and collation should match the source DB
 # if the do not then it will break foreign key relationships
 # for any tables that are created in the future as part of db sync
@@ -502,7 +504,7 @@ $ oc run mariadb-client --image $MARIADB_IMAGE -i --rm --restart=Never -- \
 $ oc run mariadb-client --image $MARIADB_IMAGE -i --rm --restart=Never -- \
     mysql -rsh "$PODIFIED_CELL1_MARIADB_IP" -uroot -p"$PODIFIED_DB_ROOT_PASSWORD" -e 'SHOW databases;'
 for CELL in $(echo "super $RENAMED_CELLS"); do
-  oc run mariadb-client --image $MARIADB_IMAGE -i --rm --restart=Never -- \
+  oc run mariadb-client -n $NAMESPACE --image $MARIADB_IMAGE -i --rm --restart=Never -- \
     mysql -rsh "${PODIFIED_MARIADB_IP[$CELL]}" -uroot -p"${PODIFIED_DB_ROOT_PASSWORD[$CELL]}" -e 'SHOW databases;'
 done
 $ for CELL in $(echo "super $RENAMED_CELLS"); do
@@ -777,12 +779,8 @@ done
 > done
   RCELL=$CELL
   [ "$CELL" = "default" ] && RCELL=$DEFAULT_CELL_NAME
-ifeval::["{OpenStackPreviousInstaller}" != "director_operator"]
   oc rsh mariadb-copy-data << EOF
-endif::[]
-ifeval::["{OpenStackPreviousInstaller}" == "director_operator"]
-  oc rsh -n $OSPDO_NAMESPACE mariadb-copy-data << EOF
-endif::[]
+  oc rsh -n $NAMESPACE mariadb-copy-data << EOF
 
     declare -A db_name_map
     db_name_map['nova']="nova_$RCELL"
@@ -1026,16 +1024,17 @@ $ default=$(grep -E ' default$' <<<$left_behind)
 $ test $(grep -Ec ' \S+$' <<<$changed) -eq 1 && echo "OK" || echo "CHECK FAILED"
 $ grep -qE " $(awk '{print $1}' <<<$default) ${DEFAULT_CELL_NAME}$" <<<$changed && echo "OK" || echo "CHECK FAILED"
 
+# TODO align with tests
 $ for CELL in $(echo $CELLS); do
   set +u
   . ~/.source_cloud_exported_variables_$CELL
   set -u
   RCELL=$CELL
   [ "$CELL" = "default" ] && RCELL=$DEFAULT_CELL_NAME
-  c1dbs=$(oc exec openstack-$RCELL-galera-0 -n {{ rhoso_namespace }} -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$RCELL]} -e 'SHOW databases;')
+  c1dbs=$(oc exec openstack-$RCELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$RCELL]} -e 'SHOW databases;')
   echo $c1dbs | grep -Eq "\bnova_${RCELL}\b" && echo "OK" || echo "CHECK FAILED"
 
-  novadb_svc_records=$(oc exec openstack-$RCELL-galera-0 -n {{ rhoso_namespace }} -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$RCELL]} \
+  novadb_svc_records=$(oc exec openstack-$RCELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$RCELL]} \
     nova_$RCELL -e "select host from services where services.binary='nova-compute' order by host asc;")
   diff -Z <(echo $novadb_svc_records) <(echo ${PULL_OPENSTACK_CONFIGURATION_NOVA_COMPUTE_HOSTNAMES[$RCELL]}) && echo "OK" || echo "CHECK FAILED"
 done

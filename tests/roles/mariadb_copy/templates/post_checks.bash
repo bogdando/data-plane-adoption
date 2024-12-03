@@ -30,6 +30,7 @@ for CELL in $(echo $RENAMED_CELLS); do # <3>
   . ~/.source_cloud_exported_variables_$RCELL
   set -u
   c1dbs=$(oc exec openstack-$CELL-galera-0 -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} -e 'SHOW databases;') # <4>
+  c1dbs=$(oc exec openstack-$CELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} -e 'SHOW databases;')
   echo $c1dbs | grep -Eq "\bnova_${CELL}\b" && echo "OK" || echo "CHECK FAILED"
   novadb_svc_records=$(oc exec openstack-$CELL-galera-0 -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} \
     nova_$CELL -e "select host from services where services.binary='nova-compute' and deleted=0 order by host asc;")

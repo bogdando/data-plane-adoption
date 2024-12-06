@@ -35,9 +35,7 @@ for CELL in $(echo $CELLS); do
     cd /backup
     for db_file in \$(ls ${CELL}.*.sql); do
       db_name=\$(echo \${db_file} | awk -F'.' '{ print \$2; }')
-      # Only import cells' DBs and omit everything else
       [[ "$CELL" != "default" && ! -v "db_cell_map[\${db_name}]" ]] && continue
-      # Route databases for importing, when extracting cell's / non-cell's DBs from 'default' cell
       if [[ "$CELL" == "default" && -v "db_cell_map[\${db_name}]" ]] ; then
         target=$DEFAULT_CELL_NAME
       elif [[ "$CELL" == "default" && ! -v "db_cell_map[\${db_name}]" ]] ; then

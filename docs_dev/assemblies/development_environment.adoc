@@ -278,6 +278,7 @@ make tripleo_deploy
 
 for n in 0 1 2 3 4; do make standalone_snapshot EDPM_COMPUTE_SUFFIX=$n; done
 ----
+<1> The source cloud default cell takes a new `$DEFAULT_CELL_NAME`. In a multi-cell adoption scenario, it may either retain its original name `default`, or become created as a last `cell<X>`.
 <1> The source cloud 'default' cell takes a new `$DEFAULT_CELL_NAME`. In a multi-cell adoption scenario, it may either retain its original name (`DEFAULT_CELL_NAME=default`), or become renamed into a free for use cell name. Never chose other existing cells names (except 'default') for `DEFAULT_CELL_NAME`.
 
 == Network routing

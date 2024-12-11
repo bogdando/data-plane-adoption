@@ -43,6 +43,8 @@ done
 
 .Procedure
 
+. Wait for cell1 Compute data plane services version to update:
+. Wait for {compute_service} data plane services version updated for all cells:
 . Wait for the {compute_service} data plane services version to update for all the cells:
 +
 ----
@@ -67,6 +69,16 @@ Review any errors in the nova Compute agent logs on the data plane, and the `nov
 ----
 $ rm -f celltemplates
 $ for CELL in $(echo $RENAMED_CELLS); do
+  nova:
+    template:
+      cellTemplates:
+        cell0:
+          conductorServiceTemplate:
+            customServiceConfig: |
+              [workarounds]
+              disable_compute_service_check_for_ffu=false
+        cell1:
+  cat >> celltemplates << EOF
 $ cat >> celltemplates << EOF
         ${CELL}:
           metadataServiceTemplate:
@@ -106,6 +118,29 @@ EOF
 $ cat celltemplates >> oscp-patch.yaml
 ----
 +
+
+* If you are adopting the {compute_service} with the {bare_metal_first_ref}, append the following `novaComputeTemplates` in the needed `cell<N>` section(s) of the {compute_service} CR patch:
++
+[source,yaml]
+----
+        cell<N>:
+          novaComputeTemplates:
+            <hostname>: <1>
+              customServiceConfig: |
+                [DEFAULT]
+                host = <hostname>
+                [workarounds]
+                disable_compute_service_check_for_ffu=true
+              computeDriver: ironic.IronicDriver
+        ...
+----
++
+<1> Replace `<hostname>` with the hostname of the node that is running the `ironic` Compute driver in the source cloud cell<N>.
+
+. Apply the patch file
++
+----
+$ oc patch openstackcontrolplane openstack -n openstack --type=merge --patch-file=oscp-patch.yaml
 * If you are adopting the {compute_service} with the {bare_metal_first_ref}, append the following `novaComputeTemplates` in the `cell<X>` section of the {compute_service} CR patch:
 +
 [source,yaml]
@@ -141,6 +176,9 @@ $ oc wait --for condition=Ready --timeout=300s Nova/nova
 ----
 $ oc patch cm nova-cells-global-config --type=json -p='[{"op": "replace", "path": "/data/99-nova-compute-cells-workarounds.conf", "value": "[workarounds]\n"}]'
 $ for CELL in $(echo $RENAMED_CELLS); do
+$ oc apply -f - <<EOF
+  oc get Openstackdataplanenodeset openstack-${CELL} || continue
+  oc apply -f - <<EOF
 $ oc get Openstackdataplanenodeset openstack-${CELL} || continue
 $ oc apply -f - <<EOF
 ---
@@ -157,7 +195,13 @@ backoffLimit: 3
 EOF
 done
 ----
++
+[NOTE]
+The service included in the `servicesOverride` key must match the name of the service that you included in the `OpenStackDataPlaneNodeSet` CR. For example, if you use a custom service called `nova-custom`, ensure that you add it to the `servicesOverride` key.
++
 
+. Wait for the Compute data plane services to be ready:
+. Wait for the Compute data plane services to be ready for all cells:
 . Wait for the Compute data plane services to be ready for all the cells:
 +
 ----
@@ -169,10 +213,15 @@ $ oc wait --for condition=Ready openstackdataplanedeployments --all --timeout=5m
 ----
 $ oc exec -it nova-cell0-conductor-0 -- nova-manage db online_data_migrations
 $ for CELL in $(echo $RENAMED_CELLS); do
+  oc exec -it nova-${CELL}-conductor-0 -- nova-manage db online_data_migrations
 $ oc exec -it nova-${CELL}-conductor-0 -- nova-manage db online_data_migrations
 done
 ----
 
+.Verification
+
+. Discover the Compute hosts in the cell:
+. Discover Compute hosts in the cells:
 . Discover the Compute hosts in the cells:
 +
 ----

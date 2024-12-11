@@ -20,6 +20,8 @@ DEFAULT_CELL_NAME="cell3"
 RENAMED_CELLS="cell1 cell2 $DEFAULT_CELL_NAME"
 ----
 +
+The `default` cell takes a new name from `DEFAULT_CELL_NAME`.
+In a multi-cell adoption scenario, it may retain its original 'default' name as well.
 ** The source cloud `default` cell takes a new `$DEFAULT_CELL_NAME`. In a multi-cell adoption scenario, the 'default' cell might retain its original name,`DEFAULT_CELL_NAME=default`, or become renamed as a cell that is free for use. Do not use other existing cell names for `DEFAULT_CELL_NAME`, except for `default`.
 ** If you deployed the source cloud with a `default` cell, and want to rename it during adoption, define the new name that you want to use, as shown in the following example:
 +
@@ -28,18 +30,57 @@ DEFAULT_CELL_NAME="cell1"
 RENAMED_CELLS="cell1"
 ----
 
+A standalone TripleO only creates a default cell, so you should define that instead:
++
+----
+DEFAULT_CELL_NAME="cell1"
+RENAMED_CELLS="cell1"
+----
++
+
 .Procedure
 
 . Patch the `OpenStackControlPlane` CR to deploy the {compute_service}:
 +
 [NOTE]
 This procedure assumes that {compute_service} metadata is deployed on the top level and not on each cell level. If the {OpenStackShort} deployment has a per-cell metadata deployment, adjust the following patch as needed. You cannot run the metadata service in `cell0`.
+To enable local cells metadata services, set `spec.nova.template.cellTemplates.cell*.metadataServiceTemplate.enable` in `OpenStackControlPlane` CR.
 To enable the metadata services of a local cell, set the `enabled` property in the `metadataServiceTemplate` field of the local cell to `true` in the `OpenStackControlPlane` CR.
 +
 [source, shell]
 ----
+$ oc patch openstackcontrolplane openstack -n openstack --type=merge --patch '
+rm -f celltemplates
 $ rm -f celltemplates
 for CELL in $(echo $RENAMED_CELLS); do
+  cat >> celltemplates << EOF
+        ${CELL}:
+          hasAPIAccess: true
+          cellDatabaseAccount: nova-$CELL
+          cellDatabaseInstance: openstack-$CELL
+          cellMessageBusInstance: rabbitmq-$CELL
+          metadataServiceTemplate:
+            enabled: false # enable here to run it in a cell instead
+            override:
+                service:
+                  metadata:
+                    annotations:
+                      metallb.universe.tf/address-pool: internalapi
+                      metallb.universe.tf/allow-shared-ip: internalapi
+                      metallb.universe.tf/loadBalancerIPs: 172.17.0.$(( 79 + ${CELL##*cell} ))
+                  spec:
+                    type: LoadBalancer
+            customServiceConfig: |
+              [workarounds]
+              disable_compute_service_check_for_ffu=true
+          conductorServiceTemplate:
+            customServiceConfig: |
+              [workarounds]
+              disable_compute_service_check_for_ffu=true
+EOF
+done
+
+cat > oscp-patch.yaml << EOF
  $ cat >> celltemplates << EOF
         ${CELL}:
           hasAPIAccess: true <1>
@@ -119,6 +160,27 @@ spec:
               [workarounds]
               disable_compute_service_check_for_ffu=true
 EOF
+          metadataServiceTemplate:
+            enabled: false # enable here to run it in a cell instead
+            override:
+                service:
+                  metadata:
+                    annotations:
+                      metallb.universe.tf/address-pool: internalapi
+                      metallb.universe.tf/allow-shared-ip: internalapi
+                      metallb.universe.tf/loadBalancerIPs: 172.17.0.80
+                  spec:
+                    type: LoadBalancer
+            customServiceConfig: |
+              [workarounds]
+              disable_compute_service_check_for_ffu=true
+          conductorServiceTemplate:
+            customServiceConfig: |
+              [workarounds]
+              disable_compute_service_check_for_ffu=true
+'
+cat celltemplates >> oscp-patch.yaml
+oc patch openstackcontrolplane openstack -n openstack --type=merge --patch-file=oscp-patch.yaml
 $ cat celltemplates >> oscp-patch.yaml
 $ oc patch openstackcontrolplane openstack  --type=merge --patch-file=oscp-patch.yaml
 ----
@@ -128,11 +190,13 @@ $ oc patch openstackcontrolplane openstack  --type=merge --patch-file=oscp-patch
 <3> The message bus instance that is used by the cell. The message bus instance names must match the names that are defined in the `OpenStackControlPlane` CR.
 <4> If you use IPv6, change the load balancer IP to the load balancer IP in your environment, for example, `metallb.universe.tf/loadBalancerIPs: fd00:bbbb::80`.
 
+. If you are adopting the {compute_service} with the {bare_metal_first_ref}, append the following `novaComputeTemplates` in the `cell1` section of the {compute_service} CR patch:
+. If you are adopting the {compute_service} with the {bare_metal_first_ref}, append the following `novaComputeTemplates` in the each `cellX` section of the {compute_service} CR patch:
 . If you are adopting the {compute_service} with the {bare_metal_first_ref}, append the `novaComputeTemplates` field with the following content in each cell in the {compute_service} CR patch. For example:
 +
 [source,yaml]
 ----
-        cell1:
+        cell<index>:
           novaComputeTemplates:
             standalone:
               customServiceConfig: |
@@ -154,6 +218,8 @@ $ oc wait --for condition=Ready --timeout=300s Nova/nova
 +
 [NOTE]
 The local Conductor services are started for each cell, while the superconductor runs in `cell0`.
+Note that `disable_compute_service_check_for_ffu` is mandatory for all imported Compute services until the external data plane is imported, and until Compute services are fast-forward upgraded. For more information, see xref:adopting-compute-services-to-the-data-plane_data-plane[Adopting Compute services to the {rhos_acro} data plane] and xref:performing-a-fast-forward-upgrade-on-compute-services_data-plane[Performing a fast-forward upgrade on Compute services].
+Note that `disable_compute_service_check_for_ffu` is mandatory for all imported Compute services until the external data plane is imported, and until Compute services are fast-forward upgraded. For more information, see xref:adopting-compute-services-to-the-data-plane_data-plane[Adopting Compute services to the {rhos_acro} data plane] and xref:performing-a-fast-forward-upgrade-on-compute-services_data-plane[Upgrading Compute services].
 Note that `disable_compute_service_check_for_ffu` is mandatory for all imported Compute services until the external data plane is imported, and until the Compute services are fast-forward upgraded. For more information, see xref:adopting-compute-services-to-the-data-plane_data-plane[Adopting Compute services to the {rhos_acro} data plane] and xref:performing-a-fast-forward-upgrade-on-compute-services_data-plane[Upgrading Compute services].
 
 .Verification
@@ -168,15 +234,12 @@ $ openstack server list
 +
 ** Compare the outputs with the topology-specific configuration in xref:proc_retrieving-topology-specific-service-configuration_migrating-databases[Retrieving topology-specific service configuration].
 
+* Query the superconductor to check that `cell1` exists, and compare it to pre-adoption values:
+* Query the superconductor to check that the expected cells exist, and compare it to pre-adoption values:
 * Query the superconductor to check that the expected cells exist, and compare it to its pre-adoption values:
 +
 ----
 . ~/.source_cloud_exported_variables
-echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS
-oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F '| cell1 |'
-set +u
-. ~/.source_cloud_exported_variables_default
-set -u
 echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS
 oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F '| cell1 |'
 $ for CELL in $(echo $CELLS); do
@@ -188,13 +251,21 @@ $ for CELL in $(echo $CELLS); do
 
   echo "comparing $CELL to $RCELL"
   echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS | grep -F "| $CELL |"
+  oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F "| $RCELL |"
 $ oc rsh nova-cell0-conductor-0 nova-manage cell_v2 list_cells | grep -F "| $RCELL |"
 done
 ----
 +
+The following changes are expected:
+The following changes are expected, for each cell `X`:
 The following changes are expected for each cell:
 +
 ** The `cellX` `nova` database and username become `nova_cellX`.
+** The default cell is renamed to `cell1`.
+** RabbitMQ transport URL no longer uses `guest`.
+** The `default` cell is renamed to `DEFAULT_CELL_NAME` (it may retain the original name, if there are multiple cells).
+** RabbitMQ transport URL no longer uses `guest`.
+** RabbitMQ transport URL no longer uses `guest`.
 ** The `default` cell is renamed to `DEFAULT_CELL_NAME`. The `default` cell might retain the original name if there are multiple cells.
 ** The RabbitMQ transport URL no longer uses `guest`.
 

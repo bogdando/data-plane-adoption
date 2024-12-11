@@ -32,7 +32,7 @@ $ MARIADB_IMAGE=registry.redhat.io/rhosp-dev-preview/openstack-mariadb-rhel9:18.
 endif::[]
 $ declare -A TRIPLEO_PASSWORDS
 ifeval::["{OpenStackPreviousInstaller}" != "director_operator"]
-$ CELLS="default cell1 cell2"
+$ CELLS="default"
 $ for CELL in $(echo $CELLS); do
 SOURCE_MARIADB_IP=172.17.0.2
 ifeval::["{build}" != "downstream"]

@@ -455,14 +455,6 @@ spec:
         secret: osp-secret
         replicas: 3
         storageRequest: 5G
-      openstack-cell2:
-        secret: osp-secret
-        replicas: 1
-        storageRequest: 5G
-      openstack-cell3:
-        secret: osp-secret
-        replicas: 1
-        storageRequest: 5G
   memcached:
     enabled: true
     templates:
@@ -520,28 +512,6 @@ spec:
               annotations:
                 metallb.universe.tf/address-pool: <networkAttachment_name>
                 metallb.universe.tf/loadBalancerIPs: <loadBalancer_IP>
-            spec:
-              type: LoadBalancer
-      rabbitmq-cell2:
-        persistence:
-          storage: 1G
-        override:
-          service:
-            metadata:
-              annotations:
-                metallb.universe.tf/address-pool: internalapi
-                metallb.universe.tf/loadBalancerIPs: 172.17.0.87
-            spec:
-              type: LoadBalancer
-      rabbitmq-cell3:
-        persistence:
-          storage: 1G
-        override:
-          service:
-            metadata:
-              annotations:
-                metallb.universe.tf/address-pool: internalapi
-                metallb.universe.tf/loadBalancerIPs: 172.17.0.88
             spec:
               type: LoadBalancer
   telemetry:
@@ -620,8 +590,8 @@ This example provides required infrastructure database and messaging services fo
 named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
 such as for `replicas`, `storage`, or `storageRequest`, as needed.
 
-This example provides required infrastructure database and messaging services for a 3 compute cells
-named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
+This example provides required infrastructure database and messaging services for a 1 compute cell
+named `cell1`. Adjust the names, counts, IP addresses, and numbers,
 like `replicas`, `storage`, or `storageRequest`, as needed.
 
 .Verification
@@ -633,6 +603,8 @@ like `replicas`, `storage`, or `storageRequest`, as needed.
 * Verify that the Galera and RabbitMQ status is `Running` for all defined cells:
 +
 ----
+$ RENAMED_CELLS="cell1 cell2 cell3"
+$ RENAMED_CELLS="cell1"
 $ RENAMED_CELLS="cell1 cell2 cell3"
 $ oc get pod openstack-galera-0 -o jsonpath='{.status.phase}{"\n"}'
 $ oc get pod openstack-cell1-galera-0 -o jsonpath='{.status.phase}{"\n"}'

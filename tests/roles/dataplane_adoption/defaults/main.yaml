@@ -183,7 +183,7 @@ dataplane_cr: |
       - validate-network
       - install-os
       - configure-os
-      - ssh-known-hosts
+      $GLOBAL
       - run-os
       - reboot-os
       - install-certs

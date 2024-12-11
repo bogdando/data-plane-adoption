@@ -18,13 +18,13 @@
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}
-    {% if pulled_openstack_configuration_shell_headers is defined %}
-    {{ pulled_openstack_configuration_shell_headers }}
-    {% else %}
-    set +u
-    . ~/.source_cloud_exported_variables_default
-    set -u
-    {% endif %}
+    {{ cells_env }}
+    for CELL in $(echo $CELLS); do
+      set +u
+      . ~/.source_cloud_exported_variables_$CELL
+      set -u
+      RCELL=$CELL
+      [ "$CELL" = "default" ] && RCELL=$DEFAULT_CELL_NAME
 
       echo "comparing $CELL to $RCELL"
       echo $PULL_OPENSTACK_CONFIGURATION_NOVAMANAGE_CELL_MAPPINGS | grep -F "| $CELL |"

@@ -1,4 +1,4 @@
-- name: wait for cell1 Nova compute EDPM services version updated
+- name: wait for Compute data plane services version updated for all cells
   ansible.builtin.shell: |
     {{ mariadb_copy_shell_vars_dst }}
     for CELL in $(echo $RENAMED_CELLS); do
@@ -84,7 +84,7 @@
       name: openstack-nova-compute-ffu-$CELL
     spec:
       nodeSets:
-        - openstack-cell1
+        - openstack-${CELL}
       servicesOverride:
         - nova-${CELL}
     backoffLimit: 3

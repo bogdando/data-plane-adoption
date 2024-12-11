@@ -19,11 +19,11 @@ source_galera_members:
 source_mariadb_ip:
   default: 172.17.0.2 #CUSTOMIZE_THIS
 
+# EDPM nodes info, for each cell compute (omitting dedicated cell controllers) on the destination cloud.
 # To enable TLS-E, the standalone hostname must be set to standalone.ooo.test
 # Defaults provided for a single-cell case.
 # Provide for each cell on the target cloud, considering default_cell_name value.
 # The defined 'networks' connections must match netconfig_networks which manages NetConfig CR
-# to retain fixed IPs, provide values matching the source TripleO deployment
 edpm_nodes:
   cell1:
     standalone:
@@ -36,8 +36,6 @@ edpm_nodes:
           name: ctlplane
           subnetName: subnet1
         - name: internalapi
-          # uncomment to retain the source cloud fixed IP value
-          #fixedIP: 172.17.0.100
           subnetName: subnet2
         - name: storage
           subnetName: subnet3
@@ -109,9 +107,6 @@ source_os_diff_config_ip: 192.168.122.100
 
 # Source OVN DB IP for DB exports on internal_api network.
 source_ovndb_ip: 172.17.0.100 #CUSTOMIZE_THIS
-
-# EDPM node IP
-edpm_node_ip: 192.168.122.100 #CUSTOMIZE_THIS
 
 # NTP servers list
 timesync_ntp_servers:

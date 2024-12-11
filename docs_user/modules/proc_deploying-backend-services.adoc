@@ -610,13 +610,15 @@ metallb.universe.tf/loadBalancerIPs: fd00:bbbb::86
 ====
 endif::[]
 
+This example provides required infrastructure database and messaging services for a 3 compute cells
+This example provides the required infrastructure database and messaging services for 3 Compute cells
 This example provides required infrastructure database and messaging services for a 1 compute cell
 named `cell1`. Adjust the names, counts, IP addresses, and numbers,
 like `replicas`, `storage`, or `storageRequest`, as needed.
 named `cell1`. Adjust the names, counts, IP addresses, and numbers, such as `replicas`, `storage`, or `storageRequest`, as needed.
 This example provides required infrastructure database and messaging services for a 3 compute cells
 named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
-like `replicas`, `storage`, or `storageRequest`, as needed.
+such as for `replicas`, `storage`, or `storageRequest`, as needed.
 
 
 .Verification

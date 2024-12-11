@@ -84,6 +84,8 @@ EOF
 * You have defined the shell variables to run the script that runs the upgrade:
 +
 ----
+CEPH_FSID=$(oc get secret ceph-conf-files -o json | jq -r '.data."ceph.conf"' | base64 -d | grep fsid | sed -e 's/fsid = //'
+$ CEPH_FSID=$(oc get secret ceph-conf-files -o json | jq -r '.data."ceph.conf"' | base64 -d | grep fsid | sed -e 's/fsid = //'
 PODIFIED_DB_ROOT_PASSWORD=$(oc get -o json secret/osp-secret | jq -r .data.DbRootPassword | base64 -d)
 CEPH_FSID=$(oc get secret ceph-conf-files -o json | jq -r '.data."ceph.conf"' | base64 -d | grep fsid | sed -e 's/fsid = //'
 
@@ -108,13 +110,6 @@ $ export COMPUTES_CELL2=(
 $ declare -A COMPUTES_CELL3
 $ export COMPUTES_CELL3=(
   # ... <5>
-)
-# ...
-
-$ declare -A COMPUTES_API_CELL1
-$ export COMPUTES_API_CELL1=( <2>
-  ["standalone.localdomain"]="172.17.0.100"
-  # ...
 )
 # ...
 
@@ -146,9 +141,9 @@ $ NODESETS="[${NODESETS%,*}]"
 ** Replace `["standalone.localdomain"]="192.168.122.100"` with the name and IP address of the {compute_service} node.
 <1> The source cloud `default` cell takes a new `DEFAULT_CELL_NAME` on the destined cloud after adoption.
 In a multi-cell adoption scenario, you may either retain its original name `default`, or create as `cell<X>`, by providing the incremented index of the last cell in the source cloud (which is, by adding a 1 to it).
-<2> For each cell, adjust <["standalone.localdomain"]="x.x.x.x">, and complete `COMPUTES_CELL<X>` and `COMPUTES_API_CELL<X>` data with the names and IP addresses of the {compute_service} nodes connected to the `ctlplane` and `internalapi` networks. Do not specify a real FQDN defined for each network, always use the same host name for each of its connected networks. Providing IP addresses and names of the hosts on remaining networks of the source cloud should be covered the similar way. Or you can adjust the generated files manually as shown below.
+<2> For each cell, adjust <["standalone.localdomain"]="192.168.122.100">, and complete `COMPUTES_CELL_<X>` data with the names and IP addresses of the {compute_service} nodes.
 <3> If your deployment has a custom DNS Domain, put it in for FQDN of the nodes. The given values will be used in the dataplane node sets' `spec.nodes.<NODE NAME>.hostName`.
-<4> Assign all {compute_service} nodes from the source cloud `cell1` cell into `COMPUTES_*CELL1`, and so on.
+<4> Assign all {compute_service} nodes from the source cloud `cell1` cell into `COMPUTES_CELL1`, and so on.
 <5> Assign all {compute_service} nodes from the source cloud `default` cell into `openstack-<X>`,
 where `<X>` is the `DEFAULT_CELL_NAME` environment variable value (here, it equals 'cell3').
 <6> Cells not containing compute nodes will be omitted as no node sets for it should be created.
@@ -267,7 +262,7 @@ data: <1>
 EOF
 ----
 +
-<1> The `data` resources in the `ConfigMap` provides configuration files for all cells.
+<1> The `data` resources in the `ConfigMap` provide cell-specific configuration files.
 <2> There is a requirement to index the <*.conf> files from '03' to '99', based on its precedence.
 Whereis a <99-*.conf> takes top precedence. Indexes below '03' are reserved for internal use.
 
@@ -341,6 +336,7 @@ spec:
         name: nova-migration-ssh-key <3>
     - configMapRef:
         name: nova-cells-global-config
+        optional: true
   playbook: osp.edpm.nova
   caCerts: combined-ca-bundle
   edpmServiceType: nova
@@ -368,13 +364,10 @@ EOF
 ----
 +
 <1> To enable a local metadata services for a cell<N>, append a `spec.dataSources.secretRef` to reference
-an additional auto-generated `nova-cell<N>-metadata-neutron-config` secret. According to xref:adopting-the-compute-service_{context}[Adopting the Compute service] guide, you should also set
-`spec.nova.template.cellTemplates.cell<N>.metadataServiceTemplate.enable` in the `OpenStackControlPlane/openstack` CR. You may either configure a single top level metadata, or you should define a per cell metadata for each cell.
+an additional auto-generated `nova-cell<N>-metadata-neutron-config` secret. You should have also set
+`spec.nova.template.cellTemplates.cell<N>.metadataServiceTemplate.enable` in the `OpenStackControlPlane/openstack` CR.
 <2> The secret `nova-cell<N>-compute-config` auto-generates for each `cell<N>`.
 <3> You must append the `nova-cell<N>-compute-config` and `nova-migration-ssh-key` references for each custom `OpenStackDataPlaneService` CR that is related to the {compute_service}.
-
-[NOTE]
-For simplicity, we share the same `nova-migration-ssh-key` key across cells. You should use different keys for different cells.
 
 * For simple configuration overrides, we do not need a custom dataplane service. However, to reconfigure the cell `cell1` in general,
 the safest option would be always creating a custom service, and a dedicated configuration map for it.
@@ -390,7 +383,6 @@ The changes will be lost, when the {rhos_long} operator becomes updated with OLM
 
 [NOTE]
 Different configurations for nodes in multiple node sets of the same cell are not covered in this guide.
-Different configurations for nodes in multiple node sets of the same cell are also supported, albeit not covered in this guide.
 Different configurations for nodes in multiple node sets of the same cell are not covered in this guide.
  $ oc apply -f - <<EOF
 ---
@@ -489,13 +481,11 @@ $ declare -A names
 $ for CELL in $(echo $RENAMED_CELLS); do
   ref="COMPUTES_$(echo ${CELL}|tr '[:lower:]' '[:upper:]')"
   eval names=\${!${ref}[@]}
-  ref_api="COMPUTES_API_$(echo ${CELL}|tr '[:lower:]' '[:upper:]')"
   [ -z "$names" ] && continue
   ind=0
   rm -f computes-$CELL
   for compute in $names; do
     ip="${ref}['$compute']"
-    ip_api="${ref_api}['$compute']"
     cat >> computes-$CELL << EOF
     ${compute}:
       hostName: $compute
@@ -537,7 +527,6 @@ EOF
         subnetName: subnet1
       - name: internalapi
         subnetName: subnet1
-        fixedIP: ${!ip_api}
       - name: storage
         subnetName: subnet1
       - name: tenant
@@ -547,10 +536,17 @@ EOF
   done
 
   test -f computes-$CELL || continue
+  if [ "$CELL" = "cell1" ]; then
+    GLOBAL="- ssh-known-hosts"
+  else
+    GLOBAL=" "
+  fi
   cat > nodeset-${CELL}.yaml <<EOF
 apiVersion: dataplane.openstack.org/v1beta1
 kind: OpenStackDataPlaneNodeSet
 metadata:
+  name: openstack-cell1
+  name: openstack-$CELL <2>
   name: openstack-cell1
   name: openstack
   name: openstack-cell1
@@ -572,7 +568,7 @@ endif::[]
     - validate-network
     - install-os
     - configure-os
-    - ssh-known-hosts
+    $GLOBAL
     - run-os
     - reboot-os
     - install-certs
@@ -733,7 +729,6 @@ done
 ----
 +
 <1> The networks composition must match the source cloud configuration to avoid dataplane connectivity downtime. The ctlplane network must come first.
-<1> The networks composition must match the source cloud configuration to avoid dataplane connectivity downtime. The ctlplane network must come first. The above commands only retain IP addresses for the hosts on `ctlplane` and `internalapi` networks. Complete it the same way for other networks, or update the resulted files manually.
 <1> If TLS Everywhere is enabled, change `spec:tlsEnabled` to `true`.
 <2> If your deployment has a custom DNS Domain, modify the `spec:nodes:[NODE NAME]:hostName` to use fqdn for the node.
 <3> Replace `<bridge_mappings>` with the value of the bridge mappings in your configuration, for example, `"datacentre:br-ctlplane"`.
@@ -790,12 +785,18 @@ done
 . If you use a {Ceph} back end for {block_storage_first_ref}, prepare the adopted data plane workloads:
 +
 ----
-$ oc patch osdpns/openstack-cell1 --type=merge --patch "
 $ oc patch osdpns/openstack --type=merge --patch "
-spec:
-  services:
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
+  if [ "$CELL" = "cell1" ]; then
+    GLOBAL="- ssh-known-hosts"
+  else
+    GLOBAL=" "
+  fi
+
+  oc patch osdpns/openstack-$CELL --type=merge --patch "
+  spec:
+    services:
   oc patch osdpns/openstack-$CELL --type=merge --patch "
   spec:
     services:
@@ -815,6 +816,8 @@ endif::[]
       - install-os
       - ceph-hci-pre
       - configure-os
+      - ssh-known-hosts
+      $GLOBAL
     - ssh-known-hosts
     - run-os
     - reboot-os
@@ -873,7 +876,6 @@ Ensure that you use the same list of services from the original `OpenStackDataPl
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
-$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
@@ -905,7 +907,6 @@ $ oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
   oc patch openstackdataplanenodeset openstack-$CELL --type='json' --patch='[
-$ oc patch openstackdataplanenodeset openstack-cell1 --type='json' --patch='[
 $ oc patch openstackdataplanenodeset openstack --type='json' --patch='[
 $ for CELL in $(echo $RENAMED_CELLS); do
   test -f nodeset-${CELL}.yaml || continue
@@ -1064,7 +1065,6 @@ $ oc logs -l app=openstackansibleee -f --max-log-requests 20
 $ for CELL in $(echo $RENAMED_CELLS); do
   oc wait --for condition=Ready osdpns/openstack-$CELL --timeout=30m
 done
-$ oc wait --for condition=Ready osdpns/openstack-cell1 --timeout=30m
 $ oc wait --for condition=Ready osdpns/openstack --timeout=30m
 $ for CELL in $(echo $RENAMED_CELLS); do
   oc wait --for condition=Ready osdpns/openstack-$CELL --timeout=30m

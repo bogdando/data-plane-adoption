@@ -610,6 +610,11 @@ metallb.universe.tf/loadBalancerIPs: fd00:bbbb::86
 ====
 endif::[]
 
+This example provides required infrastructure database and messaging services for a 1 compute cell
+named `cell1`. Adjust the names, counts, IP addresses, and numbers,
+like `replicas`, `storage`, or `storageRequest`, as needed.
+This example provides the required infrastructure database and messaging services for 1 Compute cell
+named `cell1`. Adjust the names, counts, IP addresses, and numbers, such as `replicas`, `storage`, or `storageRequest`, as needed.
 This example provides required infrastructure database and messaging services for a 3 compute cells
 named `cell1`, `cell2`, and `cell3`. Adjust the names, counts, IP addresses, and numbers,
 like `replicas`, `storage`, or `storageRequest`, as needed.
@@ -617,6 +622,8 @@ like `replicas`, `storage`, or `storageRequest`, as needed.
 
 .Verification
 
+* Verify that MariaDB and RabbitMQ are running, for all defined cells:
+* Verify that MariaDB and RabbitMQ are running for all defined cells:
 * Verify that MariaDB is running:
 * Verify that MariaDB and RabbitMQ are running, for all defined cells:
 * Verify that the Galera and RabbitMQ status is `Running` for all defined cells:
@@ -652,6 +659,9 @@ NAME                                                               READY   MESSA
 galera.mariadb.openstack.org/openstack                             True     Setup complete
 galera.mariadb.openstack.org/openstack-cell1                       True     Setup complete
 ----
+Futher on, we will be referring to the given cells names via an environment
+variable `RENAMED_CELLS`.
+Later on in this guide, the given cells names are referred to by using the environment variable `RENAMED_CELLS`.
 
 * Verify that the `OpenStackControlPlane` CR is waiting for deployment
   of the `openstackclient` pod:

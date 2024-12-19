@@ -79,12 +79,12 @@ spec:
       openstack:
         secret: osp-secret
         replicas: 1
-        storageRequest: 1Gi
+        storageRequest: 250M
 {% for cell in renamed_cells %}
       openstack-{{ cell }}:
         secret: osp-secret
         replicas: 1
-        storageRequest: 1Gi
+        storageRequest: 250M
 {% endfor %}
 
   memcached:
@@ -132,7 +132,7 @@ spec:
     templates:
       rabbitmq:
         persistence:
-          storage: 1Gi
+          storage: 200M
         override:
           service:
             metadata:
@@ -145,13 +145,48 @@ spec:
 {% for cell in renamed_cells %}
       rabbitmq-{{ cell }}:
         persistence:
-          storage: 1Gi
+          storage: 200M
         override:
           service:
             metadata:
               annotations:
                 metallb.universe.tf/address-pool: internalapi
                 metallb.universe.tf/loadBalancerIPs: {{ internalapi_prefix | default('172.17.0') }}.{{ ind.val }}
+            spec:
+              type: LoadBalancer
+      # TODO(bogdando): iterate based on renamed_cells value in kustomization.yaml
+      rabbitmq-cell2:
+        persistence:
+          storage: 200M
+        override:
+          service:
+            metadata:
+              annotations:
+                metallb.universe.tf/address-pool: internalapi
+                metallb.universe.tf/loadBalancerIPs: 172.17.0.87
+            spec:
+              type: LoadBalancer
+      rabbitmq-cell3:
+        persistence:
+          storage: 200M
+          storage: 200M
+        override:
+          service:
+            metadata:
+              annotations:
+                metallb.universe.tf/address-pool: internalapi
+                metallb.universe.tf/loadBalancerIPs: 172.17.0.87
+            spec:
+              type: LoadBalancer
+      rabbitmq-cell3:
+        persistence:
+          storage: 200M
+        override:
+          service:
+            metadata:
+              annotations:
+                metallb.universe.tf/address-pool: internalapi
+                metallb.universe.tf/loadBalancerIPs: 172.17.0.88
             spec:
               type: LoadBalancer
 {% set _ = ind.update({'val': ind.val + 1}) %}

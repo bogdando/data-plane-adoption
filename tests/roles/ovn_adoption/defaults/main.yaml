@@ -12,12 +12,12 @@ ovs_db_patch: |
           ovndbcluster-nb:
             replicas: 3
             dbType: NB
-            storageRequest: 10G
+            storageRequest: 200M
             networkAttachment: internalapi
           ovndbcluster-sb:
             replicas: 3
             dbType: SB
-            storageRequest: 10G
+            storageRequest: 200M
             networkAttachment: internalapi
 
 ovn_northd_patch: |

@@ -12,7 +12,8 @@ spec:
         [default_backend]
         filesystem_store_datadir = /var/lib/glance/images/
       storage:
-        storageRequest: 10G
+        storageClass: "local-storage"
+        storageRequest: 200M
       glanceAPIs:
         default:
           type: single

@@ -12,8 +12,8 @@ swift_patch: |
           replicas: 0
           networkAttachments:
           - storage
-          storageClass: {{ storage_class_name }}
-          storageRequest: 10Gi
+          storageClass: local-storage
+          storageRequest: 200M
         swiftProxy:
           secret: osp-secret
           replicas: 1

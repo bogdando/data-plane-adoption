@@ -7,7 +7,8 @@ spec:
     template:
       databaseInstance: openstack
       storage:
-        storageRequest: 10G
+        storageClass: "local-storage"
+        storageRequest: 200M
       customServiceConfig: |
           [DEFAULT]
           enabled_backends = default_backend:cinder

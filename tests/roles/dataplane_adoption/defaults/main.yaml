@@ -279,7 +279,7 @@ dataplane_cr: |
 
           # Do not attempt OVS major upgrades here
           edpm_ovs_packages:
-          - openvswitch3.3
+          - openvswitch3.1 # only for osp17.1.3
 
           {% if use_hugepages|bool +%}
           edpm_default_mounts:

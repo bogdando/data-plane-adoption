@@ -154,6 +154,7 @@
 # no matter the scenario to simplify logic and on a non-scenario-A environment
 # this rule shouldn't harm.
 - name: Add nftables rule to allow podified internalapi trafic to controllers
+  when: false
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}

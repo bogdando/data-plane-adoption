@@ -18,6 +18,8 @@ RENAMED_CELLS="$DEFAULT_CELL_NAME"
 
 NAMESPACE="openstack"
 
+NAMESPACE="openstack"
+
 declare -A PODIFIED_DB_ROOT_PASSWORD
 for CELL in $(echo "super $RENAMED_CELLS"); do
   PODIFIED_DB_ROOT_PASSWORD[$CELL]=$(oc get -o json secret/osp-secret | jq -r .data.DbRootPassword | base64 -d)

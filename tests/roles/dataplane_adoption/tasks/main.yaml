@@ -175,7 +175,6 @@
             name: nova-migration-ssh-key
         - configMapRef:
             name: nova-cells-global-config
-            optional: true
       playbook: osp.edpm.nova
       caCerts: combined-ca-bundle
       edpmServiceType: nova
@@ -310,11 +309,6 @@
 
     for CELL in $(echo $RENAMED_CELLS); do
       test -f nodeset-${CELL}.yaml || continue
-      if [ "$CELL" = "cell1" ]; then
-        GLOBAL="- ssh-known-hosts"
-      else
-        GLOBAL=" "
-      fi
       oc patch osdpns/openstack-$CELL --type=merge --patch "
       spec:
         services:

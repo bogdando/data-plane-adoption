@@ -57,8 +57,8 @@ for CELL in $(echo $RENAMED_CELLS); do
         ${CELL}:
           hasAPIAccess: true
           cellDatabaseAccount: nova-$CELL
-          cellDatabaseInstance: openstack-$CELL
-          cellMessageBusInstance: rabbitmq-$CELL
+          cellDatabaseInstance: openstack-$CELL <1>
+          cellMessageBusInstance: rabbitmq-$CELL <2>
           metadataServiceTemplate:
             enabled: false # enable here to run it in a cell instead
             override:

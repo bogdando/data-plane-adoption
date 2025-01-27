@@ -225,7 +225,7 @@ $ RUN_OVERRIDES='{
 }'
 ----
 +
-* With OSPdO, the `mariadb-client` needs to run on the same {rhocp_long} node where the {OpenStackShort} Controller node is running. In addition, the `internalapi-static` network needs to be attached to the pod.
+* The `mariadb-client` needs to run on the same {rhocp_long} node where the {OpenStackShort} Controller node is running. In addition, the `internalapi-static` network needs to be attached to the pod.
 endif::[]
 
 . Define the following shell variables. Replace the example values with values that are correct for your environment:
@@ -260,8 +260,8 @@ $ SOURCE_MARIADB_IP[cell2]=*<galera cell2 cluster VIP>*
 endif::[]
 ----
 +
-* Complete `CONTROLLER1_SSH` settings with SSH connection details for any non-cell controller of the source {OpenStackPreviousInstaller} cloud.
-* For each cell defined in `CELLS`, replace `SOURCE_MARIADB_IP[*]= ...`, and complete the records lists for the cell names and VIP addresses of MariaDB Galera clusters, include cells, of the source {OpenStackPreviousInstaller} cloud.
+* Provide `CONTROLLER1_SSH` settings with SSH connection details for any non-cell Controller of the source {OpenStackPreviousInstaller} cloud.
+* For each cell that is defined in `CELLS`, replace `SOURCE_MARIADB_IP[*]= ...`, with the records lists for the cell names and VIP addresses of MariaDB Galera clusters, including the cells, of the source {OpenStackPreviousInstaller} cloud.
 * To get the values for `SOURCE_MARIADB_IP`, query the puppet-generated configurations in a Controller
 ifeval::["{build_variant}" != "ospdo"]
 and CellController
@@ -274,6 +274,10 @@ $ sudo grep -rI 'listen mysql' -A10 /var/lib/config-data/puppet-generated/ | gre
 +
 
 [NOTE]
+The source cloud always uses the same password for cells' databases by design.
+For that reason, we chose to use the same passwords file for all cells' stacks.
+There is a split-stack topology, however, that allows using different passwords
+The source cloud always uses the same password for cells databases. For that reason, the same passwords file is used for all cells stacks. There is a split-stack topology, however, that allows using different passwords
 +
 ----
 $ export CONTROLLER_NODE=$(oc get vmi -ojson | jq -r '.items[0].status.nodeName')
@@ -492,7 +496,7 @@ $ chmod 0600 ~/.source_cloud_exported_variables*
 +
 [NOTE]
 ====
-This configuration is required later, during the data plane adoption post-checks.
+This configuration and the exported variables will be required later, during the data plane adoption post-checks.
 ====
 [NOTE]
 This configuration and the exported values are required later, during the data plane adoption post-checks. After the {OpenStackShort} control plane services are shut down, if any of the exported values are lost, re-running the `export` command fails because the control plane services are no longer running on the source cloud, and the data cannot be retrieved. To avoid data loss, preserve the exported values in an environment file before shutting down the control plane services.

@@ -661,7 +661,6 @@ galera.mariadb.openstack.org/openstack-cell1                       True     Setu
 ----
 Futher on, we will be referring to the given cells names via an environment
 variable `RENAMED_CELLS`.
-Later on in this guide, the given cells names are referred to by using the environment variable `RENAMED_CELLS`.
 
 * Verify that the `OpenStackControlPlane` CR is waiting for deployment
   of the `openstackclient` pod:

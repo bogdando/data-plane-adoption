@@ -151,7 +151,6 @@ $ SOURCE_MARIADB_IP[cell2]=*<galera cell2 cluster VIP>* <5>
 $ declare -A SOURCE_GALERA_MEMBERS_DEFAULT
 $ SOURCE_GALERA_MEMBERS_DEFAULT=(
 >   ["standalone.localdomain"]=172.17.0.100
->   ["standalone.localdomain"]=172.17.0.100 <4>
 >   ["standalone.localdomain"]=172.17.0.100 <6>
 >   # [...]=...
 > )
@@ -166,15 +165,16 @@ $ SOURCE_GALERA_MEMBERS_CELL2=(
 ----
 +
 <1> The CHARACTER_SET and collation should match the source DB, if the do not then it will break foreign key relationships for any tables that are created in the future as part of db sync.
-<1> `CELLS` and `RENAMED_CELLS` represent changes that are going to be made
 To get the value to set `SOURCE_MARIADB_IP`, query the puppet-generated configurations in a Controller node:
-after importing databases: the `default` cell takes a new name from `DEFAULT_CELL_NAME`.
-In a multi-cell adoption scenario, it might retain its original 'default' name as well.
-<2> The `CHARACTER_SET` variable and collation should match the source database. If they do not match, then break foreign key relationships break for any tables that are created in the future as part of database sync.
-<3> Complete `SOURCE_MARIADB_IP[*]= ...` data for each cell defined in `CELLS`. Provide records for the cell names and VIP addresses of MariaDB Galera clusters.
-<4> For each cell defined in `CELLS`, complete `SOURCE_GALERA_MEMBERS_CELL<X>` with the names of MariaDB Galera cluster members and its IP address. Replace `["standalone.localdomain"]="172.17.0.100"` to real hosts data.
+<1> `CELLS` and `RENAMED_CELLS` represent changes that are going to be made after you import the databases. The `default` cell takes a new name from `DEFAULT_CELL_NAME`.
+In a multi-cell adoption scenario, `default` cell might retain its original 'default' name as well.
+<2> The `CHARACTER_SET` variable and collation should match the source database. If they do not match, then foreign key relationships break for any tables that are created in the future as part of database sync.
+<3> Add data in  `SOURCE_MARIADB_IP[*]= ...` for each cell that is defined in `CELLS`. Provide records for the cell names and VIP addresses of MariaDB Galera clusters.
+<4> Replace <galera_cell1_cluster_VIP> with the VIP of your galera cell1 cluster.
+<5> Replace <galera_cell2_cluster_VIP> with the VIP of your galera cell2 cluster. And so on.
+<6> For each cell defined in `CELLS`, in `SOURCE_GALERA_MEMBERS_CELL<X>`, add the names of the MariaDB Galera cluster members and its IP address. Replace `["standalone.localdomain"]="172.17.0.100"` with the real hosts data.
 [NOTE]
-A standalone {OpenStackPreviousInstaller} environment only creates a 'default' cell, which should be the only `CELLS` value for such a case. The `DEFAULT_CELL_NAME` value should be `cell1`.
+A standalone {OpenStackPreviousInstaller} environment only creates a 'default' cell, which should be the only `CELLS` value in this case. The `DEFAULT_CELL_NAME` value should be `cell1`.
 <1> `CELLS` and `RENAMED_CELLS` represent changes that are going to be made after you import the databases. The `default` cell takes a new name from `DEFAULT_CELL_NAME`.
 In a multi-cell adoption scenario, `default` cell might retain its original 'default' name as well.
 <2> The `CHARACTER_SET` variable and collation should match the source database. If they do not match, then foreign key relationships break for any tables that are created in the future as part of database sync.
@@ -187,15 +187,16 @@ Note that the `super` is not a cell, but the top-scope Nova
 API "upcall" database instance. A super conductor connects to that database.
 In this guide, the upcall and cells' databases are going to use the same password
 [NOTE]
-The `super` is not a cell, but the top-scope Nova API "upcall" database instance. A super conductor connects to that database. In this guide, the upcall and cells databases are going to use the same password that is
 [NOTE]
 A standalone {OpenStackPreviousInstaller} environment only creates a 'default' cell, which should be the only `CELLS` value in this case. The `DEFAULT_CELL_NAME` value should be `cell1`.
 
 Note that the `super` is not a cell, but the top-scope Nova
 API "upcall" database instance. A super conductor connects to that database.
 In this guide, the upcall and cells' databases are going to use the same password
-defined in `osp-secret`. Old passwords are only needed to prepare the data exports.
+The `super` is the top-scope Nova API upcall database instance. A super conductor connects to that database. In subsequent examples, the upcall and cells databases use the same password that is defined in `osp-secret`. Old passwords are only needed to prepare the data exports.
 
+To get the values for `SOURCE_MARIADB_IP`, query the puppet-generated configurations in a Controller and CellController nodes:
+To get the values for `SOURCE_MARIADB_IP`, query the puppet-generated configurations in the Controller and CellController nodes:
 To get the values for `SOURCE_MARIADB_IP`, query the puppet-generated configurations in a Controller and CellController nodes:
 [NOTE]
 The `super` is the top-scope Nova API upcall database instance. A super conductor connects to that database. In subsequent examples, the upcall and cells databases use the same password that is defined in `osp-secret`. Old passwords are only needed to prepare the data exports.
@@ -206,13 +207,13 @@ The `super` is the top-scope Nova API upcall database instance. A super conducto
 $ sudo grep -rI 'listen mysql' -A10 /var/lib/config-data/puppet-generated/ | grep bind
 ----
 
-* To get the values for `SOURCE_GALERA_MEMBERS_*`, query the puppet-generated configurations in a Controller and CellController nodes:
+* To get the values for `SOURCE_GALERA_MEMBERS_*`, query the puppet-generated configurations in the Controller and CellController nodes:
 +
 ----
 $ sudo grep -rI 'listen mysql' -A10 /var/lib/config-data/puppet-generated/ | grep server
 ----
 +
-The source cloud always uses the same password for cells databases by design. For that reason, the same passwords file is used for all cells stacks. There is a split-stack topology, however, that allows using different passwords files for each stack.
+The source cloud always uses the same password for cells databases. For that reason, the same passwords file is used for all cells stacks. There is a split-stack topology, however, that allows using different passwords files for each stack.
 
 * To get the values for `SOURCE_GALERA_MEMBERS_*`, query the puppet-generated configurations in the Controller and CellController nodes:
 +
@@ -289,7 +290,6 @@ $ oc wait --for condition=Ready pod/mariadb-copy-data --timeout=30s
 .Procedure
 
 . Check that the source Galera database cluster members are online and synced:
-. Check that the source Galera database cluster(s) members are online and synced:
 . Check that the source Galera database clusters in each cell have its members online and synced:
 +
 ----
@@ -323,7 +323,6 @@ $ for CELL in $(echo $CELLS); do
 ----
 +
 Each additional Nova v2 cell runs a dedicated Galera database cluster, so the checking is done for all of it.
-Each additional Compute service (nova) v2 cell runs a dedicated Galera database cluster, so the checking is done for each cell.
 Each additional Nova v2 cell runs a dedicated Galera database cluster, so the checking is done for all of it.
 Each additional {compute_service_first_ref} v2 cell runs a dedicated Galera database cluster, so the command checks each cell.
 
@@ -376,7 +375,6 @@ $ for CELL in $(echo "super $RENAMED_CELLS"); do
 +
 [NOTE]
 You must transition {compute_service_first_ref} services that are imported later into a superconductor architecture by deleting the old service records in the cell databases, starting with `cell1`. New records are registered with different hostnames provided by the {compute_service} operator. All Compute services, except the Compute agent, have no internal state, and their service records can be safely deleted. You also need to rename the former `default` cell to `cell1`.
-You must transition {compute_service_first_ref} services that are imported later into a superconductor architecture by deleting the old service records in the cell databases, starting with `cell1`. New records are registered with different hostnames provided by the {compute_service} operator. All Compute services, except the Compute agent, have no internal state, and their service records can be safely deleted. You also need to rename the former `default` cell to `DEFAULT_CELL_NAME`.
 You must transition Compute services that you import later into a superconductor architecture by deleting the old service records in the cell databases, starting with `cell1`. New records are registered with different hostnames that are provided by the {compute_service} operator. All Compute services, except the Compute agent, have no internal state, and you can safely delete their service records. You also need to rename the former `default` cell to `DEFAULT_CELL_NAME`.
 
 . Create a dump of the original databases:

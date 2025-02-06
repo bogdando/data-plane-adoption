@@ -68,9 +68,7 @@ image_tag: "current-podified"
 ansible_ssh_private_key_secret: dataplane-adoption-secret
 default_timesync_ntp_servers:
   - hostname: pool.ntp.org
-# FIXME(bogdando): adapt for mult-cell or single-cell
 edpm_node_hostname: standalone.localdomain
-edpm_node_ip: 192.168.122.100
 edpm_user: root
 edpm_nodes:
   cell1:
@@ -183,7 +181,7 @@ dataplane_cr: |
       - validate-network
       - install-os
       - configure-os
-      $GLOBAL
+      - ssh-known-hosts
       - run-os
       - reboot-os
       - install-certs
@@ -279,7 +277,8 @@ dataplane_cr: |
 
           # Do not attempt OVS major upgrades here
           edpm_ovs_packages:
-          - openvswitch3.1 # only for osp17.1.3
+            #- openvswitch3.1 # only for osp17.1.3
+            - openvswitch3.3
 
           {% if use_hugepages|bool +%}
           edpm_default_mounts:

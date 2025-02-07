@@ -92,21 +92,13 @@ mariadb_members_env: |-
   declare -A SOURCE_GALERA_MEMBERS_{{ cell.upper() }}
   SOURCE_GALERA_MEMBERS_{{ cell.upper() }}=(
   {% if source_galera_members is string %}
-<<<<<<< HEAD
-  {{ source_galera_members }}
-=======
     {{ source_galera_members }}
->>>>>>> 4a26cfa9 (Fix rebase)
   {% else %}
   {% for n in source_galera_members[cell] | default([]) %}
     [{{ n.name|quote }}]={{ n.ip|quote }}
   {% endfor %}
-<<<<<<< HEAD
   {% endif %}
-=======
->>>>>>> 4a26cfa9 (Fix rebase)
   )
-  {% endif %}
   {% endfor %}
 
 # Headers for the destination databases access passwords

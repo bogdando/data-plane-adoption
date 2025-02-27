@@ -8,6 +8,7 @@
 
 - name: stop control plane services
   no_log: "{{ use_no_log }}"
+  when: stop
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}

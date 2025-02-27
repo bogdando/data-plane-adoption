@@ -8,6 +8,7 @@
       EDPM_PRIVATEKEY_PATH="{{ edpm_privatekey_path }}"
 
 - name: stop pacemaker services
+  when: stop
   no_log: "{{ use_no_log }}"
   ansible.builtin.shell: |
     {{ shell_header }}

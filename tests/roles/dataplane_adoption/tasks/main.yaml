@@ -466,6 +466,7 @@
         exit 2
 
 - name: Remove the remaining TripleO services
+  when: stop
   block:
     - name: Create an OpenStackDataPlaneService CR to clean up the data plane services you are adopting
       no_log: "{{ use_no_log }}"

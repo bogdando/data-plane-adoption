@@ -139,6 +139,7 @@
 
 - name: stop northd service
   no_log: "{{ use_no_log }}"
+  when: stop
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}
@@ -263,6 +264,7 @@
 
 - name: stop old ovn ovsdb services
   no_log: "{{ use_no_log }}"
+  when: stop
   ansible.builtin.shell: |
     {{ shell_header }}
     {{ oc_header }}

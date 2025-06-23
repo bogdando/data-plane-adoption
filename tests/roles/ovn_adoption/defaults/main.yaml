@@ -12,13 +12,11 @@ ovs_db_patch: |
           ovndbcluster-nb:
             replicas: 1
             dbType: NB
-            storageClassName: "{{ storage_class_name }}"
             storageRequest: 200M
             networkAttachment: internalapi
           ovndbcluster-sb:
             replicas: 1
             dbType: SB
-            storageClassName: "{{ storage_class_name }}"
             storageRequest: 200M
             networkAttachment: internalapi
 

@@ -92,7 +92,7 @@ mariadb_members_env: |-
   declare -A SOURCE_GALERA_MEMBERS_{{ cell.upper() }}
   SOURCE_GALERA_MEMBERS_{{ cell.upper() }}=(
   {% if source_galera_members is string %}
-    {{ source_galera_members }}
+  {{ source_galera_members }}
   {% else %}
   {% for n in source_galera_members[cell] | default([]) %}
     [{{ n.name|quote }}]={{ n.ip|quote }}
@@ -111,9 +111,6 @@ mariadb_passwords_env: |-
     PODIFIED_DB_ROOT_PASSWORD[$CELL]=$(oc get -o json secret/osp-secret | jq -r .data.DbRootPassword | base64 -d)
   done
 
-namespace_env: |-
-  NAMESPACE={{ deploy_ctlplane_ospdo | bool | ternary(org_namespace, rhoso_namespace ) }}
-
 # Header for the source database access
 # TODO: Env vars for OSPDo case are also configured in env_vars_src_ospdo.yaml. Move them here, eventually?
 # OSPDo RUN_OVERRIDES definition exists only in docs (missing in code?).
@@ -122,12 +119,7 @@ namespace_env: |-
 mariadb_copy_shell_vars_src: |-
   {{ shell_header }}
 
-<<<<<<< HEAD
   PASSWORD_FILE="{{ tripleo_passwords['default'] | replace("~", "$HOME") }}"
-=======
-  PASSWORD_FILE="$HOME/overcloud-passwords.yaml"
-  {{ namespace_env }}
->>>>>>> 4a26cfa9 (Fix rebase)
 
   {{ mariadb_image_env }}
   {{ cells_env }}
@@ -138,15 +130,10 @@ mariadb_copy_shell_vars_src: |-
   done
 
   RUN_OVERRIDES=' '
-<<<<<<< HEAD
   MARIADB_CLIENT_ANNOTATIONS={{ deploy_ctlplane_ospdo | default(false) | bool | ternary("-n $NAMESPACE", "--annotations=k8s.v1.cni.cncf.io/networks=internalapi") }}
   MARIADB_RUN_OVERRIDES={{ deploy_ctlplane_ospdo | default(false) | bool | ternary("--overrides=${RUN_OVERRIDES} $MARIADB_CLIENT_ANNOTATIONS {{ mysql_client_override }}", "$MARIADB_CLIENT_ANNOTATIONS") }}
 
   OSPDO_MARIADB_CLIENT_ANNOTATIONS='[{"name": "internalapi-static","ips": ["172.17.0.99/24"]}]'
-=======
-  MARIADB_CLIENT_ANNOTATIONS={{ deploy_ctlplane_ospdo | bool | ternary("-n $NAMESPACE", "--annotations=k8s.v1.cni.cncf.io/networks=internalapi") }}
-  MARIADB_RUN_OVERRIDES={{ deploy_ctlplane_ospdo | bool | ternary("--overrides=${RUN_OVERRIDES} $MARIADB_CLIENT_ANNOTATIONS {{ mysql_client_override }}", "$MARIADB_CLIENT_ANNOTATIONS") }}
->>>>>>> 4a26cfa9 (Fix rebase)
 
   {{ pull_openstack_configuration_ssh_shell_vars }}
 
@@ -169,7 +156,6 @@ mariadb_copy_shell_vars_dst: |
   {{ oc_header }}
   {{ mariadb_image_env }}
   {{ cells_env }}
-  {{ namespace_env }}
 
   CHARACTER_SET=utf8
   COLLATION=utf8_general_ci
@@ -186,12 +172,8 @@ mariadb_copy_shell_vars_dst: |
   done
 
 # Header for the destination cloud EDPM Nova cell computes FDQN and IP pairs, per a cell
-<<<<<<< HEAD
 # NOTE(bogdando): Assume inernalapi network comes with an index 1. Ignore FQDN on a network to simply bind IPs by a hostname.
 # NOTE(bogdando): Assume cell1 must always have at least an only compute node. That is for backwards compatibility with scenarios not aware of multiple cells.
-=======
-# NOTE: Assume inernalapi network comes with an index 1. Ignore FQDN on a network to simply bind IPs by a hostname.
->>>>>>> 4a26cfa9 (Fix rebase)
 edpm_computes_shell_vars_src: |-
   {{ shell_header }}
   {{ cells_env }}
@@ -210,16 +192,8 @@ edpm_computes_shell_vars_src: |-
   )
   declare -A COMPUTES_API_{{ cell.upper() }}
   COMPUTES_API_{{ cell.upper() }}=(
-    {%- for v in edpm_nodes[cell] | default({}) %}
-    ["{{ edpm_nodes[cell][v].hostName }}"]={{ edpm_nodes[cell][v].networks[1].fixedIP|default("") }}
     {%- for v in edpm_nodes_real[cell] | default([]) %}
     ["{{ edpm_nodes_real[cell][v].hostName }}"]={{ edpm_nodes_real[cell][v].networks[1].fixedIP|default("") }}
-    {% endfor -%}
-  )
-  declare -A COMPUTES_API_{{ cell.upper() }}
-  COMPUTES_API_{{ cell.upper() }}=(
-    {%- for v in edpm_nodes[cell] | default({}) %}
-    ["{{ edpm_nodes[cell][v].hostName }}"]={{ edpm_nodes[cell][v].networks[1].fixedIP|default("") }}
     {% endfor -%}
   )
   {% endfor %}

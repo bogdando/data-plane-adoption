@@ -76,11 +76,7 @@
       MEMBERS=SOURCE_GALERA_MEMBERS_$(echo ${CELL}|tr '[:lower:]' '[:upper:]')[@]
       for i in "${!MEMBERS}"; do
         echo "Checking for the database node $i WSREP status Synced"
-<<<<<<< HEAD
         oc rsh mariadb-copy-data mysql \
-=======
-        oc rsh  -n $NAMESPACE mariadb-copy-data mysql \
->>>>>>> 4a26cfa9 (Fix rebase)
           -h "$i" -uroot -p"${SOURCE_DB_ROOT_PASSWORD[$CELL]}" \
           -e "show global status like 'wsrep_local_state_comment'" | \
           grep -qE "\bSynced\b"

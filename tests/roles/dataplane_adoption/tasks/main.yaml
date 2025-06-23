@@ -317,7 +317,6 @@
           - configure-network
           - validate-network
           - install-os
-          - ceph-hci-pre
           - configure-os
           - ssh-known-hosts
           - run-os

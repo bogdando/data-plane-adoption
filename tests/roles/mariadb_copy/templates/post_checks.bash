@@ -5,19 +5,11 @@
 set +u
 . ~/.source_cloud_exported_variables_default
 set -u
-<<<<<<< HEAD
 dbs=$(oc exec openstack-galera-0 -c galera -- mysql -rs -uroot -p"${PODIFIED_DB_ROOT_PASSWORD['super']}" -e 'SHOW databases;')
 echo $dbs | grep -Eq '\bkeystone\b' && echo "OK" || echo "CHECK FAILED"
 echo $dbs | grep -Eq '\bneutron\b' && echo "OK" || echo "CHECK FAILED"
 echo "${PULL_OPENSTACK_CONFIGURATION_DATABASES[@]}" | grep -Eq '\bovs_neutron\b' && echo "OK" || echo "CHECK FAILED" # <1>
 novadb_mapped_cells=$(oc exec openstack-galera-0 -c galera -- mysql -rs -uroot -p"${PODIFIED_DB_ROOT_PASSWORD['super']}" \
-=======
-dbs=$(oc exec openstack-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p"${PODIFIED_DB_ROOT_PASSWORD['super']}" -e 'SHOW databases;')
-echo $dbs | grep -Eq '\bkeystone\b' && echo "OK" || echo "CHECK FAILED"
-echo $dbs | grep -Eq '\bneutron\b' && echo "OK" || echo "CHECK FAILED"
-echo "${PULL_OPENSTACK_CONFIGURATION_DATABASES[@]}" | grep -Eq '\bovs_neutron\b' && echo "OK" || echo "CHECK FAILED" # <1>
-novadb_mapped_cells=$(oc exec openstack-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p"${PODIFIED_DB_ROOT_PASSWORD['super']}" \
->>>>>>> 4a26cfa9 (Fix rebase)
   nova_api -e 'select uuid,name,transport_url,database_connection,disabled from cell_mappings;') # <2>
 uuidf='\S{8,}-\S{4,}-\S{4,}-\S{4,}-\S{12,}'
 default=$(printf "%s\n" "$PULL_OPENSTACK_CONFIGURATION_NOVADB_MAPPED_CELLS" | sed -rn "s/^($uuidf)\s+default\b.*$/\1/p")
@@ -37,25 +29,13 @@ for CELL in $(echo $RENAMED_CELLS); do # <3>
   set +u
   . ~/.source_cloud_exported_variables_$RCELL
   set -u
-<<<<<<< HEAD
   c1dbs=$(oc exec openstack-$CELL-galera-0 -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} -e 'SHOW databases;') # <4>
-  c1dbs=$(oc exec openstack-$CELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} -e 'SHOW databases;')
+  echo $c1dbs | grep -Eq "\bnova_${CELL}\b" && echo "OK" || echo "CHECK FAILED"
   novadb_svc_records=$(oc exec openstack-$CELL-galera-0 -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} \
     nova_$CELL -e "select host from services where services.binary='nova-compute' and deleted=0 order by host asc;")
-
-  # ensure the registered Compute service name has not changed
-=======
-  c1dbs=$(oc exec openstack-$CELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} -e 'SHOW databases;') # <4>
-  echo $c1dbs | grep -Eq "\bnova_${CELL}\b" && echo "OK" || echo "CHECK FAILED"
->>>>>>> 4a26cfa9 (Fix rebase)
-  novadb_svc_records=$(oc exec openstack-$CELL-galera-0 -n $NAMESPACE -c galera -- mysql -rs -uroot -p${PODIFIED_DB_ROOT_PASSWORD[$CELL]} \
-    nova_$CELL -e "select host from services where services.binary='nova-compute' order by host asc;")
   diff -Z <(echo "x$novadb_svc_records") <(echo "x${PULL_OPENSTACK_CONFIGURATION_NOVA_COMPUTE_HOSTNAMES[@]}") && echo "OK" || echo "CHECK FAILED" # <5>
 done
-<<<<<<< HEAD
-=======
 
->>>>>>> 4a26cfa9 (Fix rebase)
 # <1> Ensures that the {networking_first_ref} database is renamed from `ovs_neutron`.
 # <2> Ensures that the `default` cell is renamed to `$DEFAULT_CELL_NAME`, and the cell UUIDs are retained.
 # <3> Ensures that the registered Compute services names have not changed.
